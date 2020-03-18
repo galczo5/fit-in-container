@@ -37,11 +37,13 @@ export class FitContainerDirective implements AfterViewInit, OnDestroy {
           if (scroll > offset && this.currentHideLevel < this.maxHideLevel) {
             this.hideNextLevel();
             this.lastOffsetWidth = offset;
-          } else if ((this.forcePrevLevel || offset !== this.lastOffsetWidth) && this.currentHideLevel > 0) {
+          } else if ((this.forcePrevLevel || offset > this.lastOffsetWidth) && this.currentHideLevel > 0) {
             this.showPrevLevel();
             this.forcePrevLevel = false;
             this.lastOffsetWidth = offset;
           }
+
+          console.log('--', offset, scroll);
 
         });
     });
