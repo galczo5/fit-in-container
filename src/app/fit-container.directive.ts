@@ -1,6 +1,6 @@
 import {AfterViewInit, Directive, ElementRef, NgZone, OnDestroy, Renderer2} from '@angular/core';
 import {animationFrameScheduler, interval, Subject} from 'rxjs';
-import {map, takeUntil} from 'rxjs/operators';
+import {takeUntil} from 'rxjs/operators';
 
 const CHECKING_TIME = 250;
 
@@ -28,25 +28,49 @@ export class FitContainerDirective implements AfterViewInit, OnDestroy {
 
       interval(CHECKING_TIME, animationFrameScheduler)
         .pipe(
-          map(() => this.nativeElement.scrollWidth),
           takeUntil(this.destroy$)
         )
-        .subscribe((scroll: number) => {
+        .subscribe(() => {
+          const scroll = this.nativeElement.scrollWidth;
           const offset = this.nativeElement.offsetWidth;
 
           if (scroll > offset && this.currentHideLevel < this.maxHideLevel) {
-            this.hideNextLevel();
-            this.lastOffsetWidth = offset;
+            while (this.tryHide()) {
+              this.lastOffsetWidth = offset;
+            }
           } else if ((this.forcePrevLevel || offset > this.lastOffsetWidth) && this.currentHideLevel > 0) {
             this.showPrevLevel();
             this.forcePrevLevel = false;
-            this.lastOffsetWidth = offset;
+
+            if (this.check()) {
+              this.lastOffsetWidth = offset;
+            }
           }
-
-          console.log('--', offset, scroll);
-
         });
     });
+  }
+
+  private check(): boolean {
+    const scroll = this.nativeElement.scrollWidth;
+    const offset = this.nativeElement.offsetWidth;
+
+    if (scroll > offset) {
+      this.hideNextLevel();
+      return false;
+    }
+
+    return true;
+  }
+
+  tryHide(): boolean {
+    const scroll = this.nativeElement.scrollWidth;
+    const offset = this.nativeElement.offsetWidth;
+
+    if (scroll > offset && this.currentHideLevel < this.maxHideLevel) {
+      this.hideNextLevel();
+      return true;
+    }
+    return false;
   }
 
   ngOnDestroy(): void {
